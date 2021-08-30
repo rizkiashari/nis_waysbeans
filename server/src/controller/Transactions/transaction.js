@@ -346,26 +346,76 @@ exports.myTransaction = async (req, res) => {
   }
 };
 
-// Restore Data Transaction
-// exports.restoreTransaction = async (req, res) => {
-//   try {
-//     const transRestore = await transaction.restore({
-//       where: {
-//         id: req.params.id,
-//       },
-//     });
-//     res.status(200).send({
-//       status: "success",
-//       message: "Transaction Restored Success",
-//       data: {
-//         transaction: transRestore,
-//       },
-//     });
-//   } catch (error) {
-//     console.log("Error", error);
-//     res.status(500).send({
-//       status: "failed",
-//       message: "Restore Transaction Invalid",
-//     });
-//   }
-// };
+// Update Stock
+exports.updateStock = async (req, res) => {
+  try {
+    const { body, params } = req;
+
+    await transaction.update(body, {
+      where: {
+        id: req.params.id,
+      },
+    });
+    console.log("body: ", body);
+    body.Products.map(async (item) => {
+      const quantity = item.orderQuantity.qty;
+      let productId = "";
+      const itemProduct = await Product.findOne({
+        where: {
+          id: item.id,
+        },
+      });
+      console.log("ItemProduct", itemProduct);
+      productId = itemProduct.dataValues;
+      productId = {
+        ...productId,
+        stock: +productId.stock - +quantity,
+      };
+      await Product.update(productId, {
+        where: {
+          id: item.id,
+        },
+      });
+    });
+
+    const afterUpdate = await transaction.findOne({
+      where: {
+        id: req.params.id,
+      },
+      attributes: {
+        exclude: ["updatedAt", "userId", "createdAt"],
+      },
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: {
+            exclude: ["createdAt", "updatedAt", "password"],
+          },
+        },
+        {
+          model: Product,
+          as: "Products",
+          attributes: {
+            exclude: ["createdAt", "updatedAt"],
+          },
+          through: {
+            attributes: [["orderQuantity", "qty"]],
+            as: "orderQuantity",
+          },
+        },
+      ],
+    });
+    res.status(200).send({
+      status: "success",
+      message: "Stock Updated Success",
+      data: afterUpdate,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      status: "failed",
+      message: "Update Stock Invalid",
+    });
+  }
+};

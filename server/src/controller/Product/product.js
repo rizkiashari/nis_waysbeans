@@ -106,7 +106,7 @@ exports.addProduct = async (req, res) => {
           name: productOne.name,
         },
         attributes: {
-          exclude: ["createdAt", "updatedAt", "cityId"],
+          exclude: ["createdAt", "updatedAt"],
         },
       });
 
@@ -136,6 +136,116 @@ exports.addProduct = async (req, res) => {
     res.status(500).send({
       status: "failed",
       message: "product add invalid",
+    });
+  }
+};
+
+// Update Product
+exports.updateProduct = async (req, res) => {
+  try {
+    const userValid = await User.findOne({
+      where: {
+        id: req.idUser,
+      },
+      include: {
+        model: Roll,
+        as: "rolls",
+        attributes: {
+          exclude: ["createdAt", "updatedAt"],
+        },
+      },
+      attributes: {
+        exclude: ["createdAt", "updatedAt", "password", "listId"],
+      },
+    });
+    if (userValid.rolls.name === "Owner") {
+      const path = process.env.PATH_PRODUCT;
+      const { id } = req.params;
+
+      await Product.update(req.body, {
+        where: {
+          id,
+        },
+      });
+      let productOne = await Product.findOne({
+        where: {
+          id,
+        },
+        attributes: {
+          exclude: ["createdAt", "updatedAt"],
+        },
+      });
+      productOne = JSON.parse(JSON.stringify(productOne));
+      res.status(200).send({
+        status: "success",
+        message: "Add Product berhasil",
+        data: {
+          product: {
+            id: productOne.id,
+            name: productOne.name,
+            price: productOne.price,
+            description: productOne.description,
+            stock: productOne.stock,
+            photo: productOne.photo ? path + productOne.photo : null,
+          },
+        },
+      });
+    } else {
+      res.status(500).send({
+        status: "failed",
+        message: `gagal update product, kamu ${userValid.rolls.name}`,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      status: "failed",
+      message: "Update product invalid",
+    });
+  }
+};
+
+// Delete Product
+exports.deleteProduct = async (req, res) => {
+  try {
+    const userValid = await User.findOne({
+      where: {
+        id: req.idUser,
+      },
+      include: {
+        model: Roll,
+        as: "rolls",
+        attributes: {
+          exclude: ["createdAt", "updatedAt"],
+        },
+      },
+      attributes: {
+        exclude: ["createdAt", "updatedAt", "password", "listId"],
+      },
+    });
+    if (userValid.rolls.name === "Owner") {
+      const { id } = req.params;
+
+      await Product.destroy({
+        where: {
+          id,
+        },
+      });
+      res.status(200).send({
+        status: "success",
+        message: `Delete Product ${id} berhasil`,
+      });
+    } else {
+      res.status(500).send({
+        status: "failed",
+        message: `gagal delete product, kamu ${userValid.rolls.name}`,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      status: "failed",
+      message: "Delete product invalid",
     });
   }
 };

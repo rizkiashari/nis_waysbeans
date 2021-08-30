@@ -3,6 +3,8 @@ const {
   getProducts,
   addProduct,
   getProductById,
+  updateProduct,
+  deleteProduct,
 } = require("../controller/Product/product");
 const {
   addTransaction,
@@ -11,6 +13,7 @@ const {
   myTransaction,
   updateTransaction,
   deleteTransaction,
+  updateStock,
 } = require("../controller/Transactions/transaction");
 const {
   createUser,
@@ -39,8 +42,12 @@ router.get("/check-auth", auth, checkAuth);
 router.get("/products", getProducts);
 // Get Product By id
 router.get("/product/:id", getProductById);
+// Update Product
+router.patch("/product/:id", auth, updateProduct);
 // Add Product
 router.post("/product", auth, uploadFile("photo"), addProduct);
+// Delete Product
+router.delete("/product/:id", auth, deleteProduct);
 
 // Add Transaction
 router.post("/transaction", auth, uploadFile("attachment"), addTransaction);
@@ -50,6 +57,8 @@ router.get("/transactions", auth, getAllTransaction);
 router.get("/transaction/:id", auth, getSingleTransactionId);
 // Update Transaction
 router.patch("/transaction/:id", auth, updateTransaction);
+// Update Stock
+router.patch("/edit-stock/:id", auth, updateStock);
 // Delete Transaction
 router.delete("/transaction/:id", auth, deleteTransaction);
 // My transactions
